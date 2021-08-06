@@ -19,6 +19,8 @@ ENV VERSIONED_PACKAGES \
  nodejs=${NODEJS_VERSION}\
  nodejs-legacy=${NODEJS_LEGACY_VERSION}\
  python=${PYTHON_VERSION}
+ENV FLUX_INSTALL_SCRIPT https://fluxcd.io/install.sh
+ENV MCCP_DOWNLOAD_URL https://weaveworks-wkp.s3.amazonaws.com/mccp-master-linux-amd64
 
 # Install software and cleanup
 # Tell apt not to use interactive prompts
@@ -28,6 +30,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 RUN apt-get install -y --no-install-recommends \
 # Install packages
+ curl \
  ${VERSIONED_PACKAGES} \
  awscli=1.2.9-2 \
  && \
@@ -44,6 +47,13 @@ RUN apt-get install -y --no-install-recommends \
  /var/cache/* \
  /var/log/* \
  /var/lib/apt/lists/*
+
+# Use the 'curl | bash' antipattern to install flux
+RUN curl -s $FLUX_INSTALL_SCRIPT | sudo bash
+
+# Use curl to download a binary into /bin
+RUN curl -o /bin/mccp $MCCP_DOWNLOAD_URL && \
+    chmod 0755 /bin/mccp
 
 # Copy AWS example credentials, entirely unprotected
 COPY .aws /root/.aws
